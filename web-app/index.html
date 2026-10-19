@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XMNT</title>
+  <!-- Noto Sans TC (headings) / Huninn (body text) / Roboto (Latin letters and digits). Without internet access the local fallback stack in style.css is used -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap">
+  <script>
+    // --font-sans is ordered Roboto -> Huninn -> Noto Sans TC, but the browser's lazy
+    // font loading often skips fetching Huninn once it sees Noto Sans TC already covers
+    // the Chinese characters, so Chinese body text ends up in Noto Sans TC instead of the
+    // intended Huninn (Packet Studio bundles Huninn via next/font and has no such race).
+    // Requesting it immediately here ensures the same font as Packet Studio.
+    if (document.fonts) document.fonts.load('400 16px Huninn');
+  </script>
+  <link rel="stylesheet" href="ui/style.css">
+</head>
+<body>
+  <header id="site-header" class="site-header"></header>
+
+  <main class="home-main">
+    <section id="home" class="home"></section>
+  </main>
+
+  <dialog id="port-dialog"></dialog>
+
+  <footer id="site-footer" class="site-footer"></footer>
+
+  <script type="module" src="ui/main-home.js"></script>
+</body>
+</html>

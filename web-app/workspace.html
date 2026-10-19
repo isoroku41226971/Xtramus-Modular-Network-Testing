@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XMNT 工作區</title>
+  <!-- Noto Sans TC (headings) / Huninn (body text) / Roboto (Latin letters and digits). Without internet access the local fallback stack in style.css is used -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap">
+  <script>
+    // --font-sans is ordered Roboto -> Huninn -> Noto Sans TC, but the browser's lazy
+    // font loading often skips fetching Huninn once it sees Noto Sans TC already covers
+    // the Chinese characters, so Chinese body text ends up in Noto Sans TC instead of the
+    // intended Huninn (Packet Studio bundles Huninn via next/font and has no such race).
+    // Requesting it immediately here ensures the same font as Packet Studio. Same setup
+    // as index.html, keeping both pages consistent.
+    if (document.fonts) document.fonts.load('400 16px Huninn');
+  </script>
+  <link rel="stylesheet" href="ui/style.css">
+</head>
+<body>
+  <header id="site-header" class="site-header"></header>
+
+  <div class="toolbar">
+    <div id="save-bar" class="save-bar"></div>
+    <span id="leased" class="leased"></span>
+    <span class="grow"></span>
+    <span id="simulate-field"></span>
+    <button id="close-project">關閉專案</button>
+  </div>
+
+  <main>
+    <div class="actions">
+      <button id="new-item" class="primary">＋ 新增測試項</button>
+    </div>
+
+    <div>
+      <div class="label">測試項</div>
+      <div id="items" class="frame row-wrap"></div>
+    </div>
+
+    <div>
+      <div class="label">快速加入</div>
+      <div id="catalog"></div>
+    </div>
+
+    <div class="divider">
+      <button id="add-all" class="primary">↓ 全部加入 ↓</button>
+    </div>
+
+    <div>
+      <div class="label">
+        待測區
+        <button id="run-all" class="primary">全部執行</button>
+        <button id="stop-all">■ 全部停止</button>
+        <button id="export-excel">匯出 Excel</button>
+        <button id="export-pdf" disabled>匯出 PDF</button>
+        <span id="batch" class="muted"></span>
+      </div>
+      <div id="queue" class="frame"></div>
+    </div>
+  </main>
+
+  <dialog id="picker"></dialog>
+  <dialog id="editor" class="wide"></dialog>
+  <dialog id="need-save-as"></dialog>
+  <dialog id="save-as"></dialog>
+  <dialog id="leave-guard"></dialog>
+
+  <footer id="site-footer" class="site-footer"></footer>
+
+  <script type="module" src="ui/main-workspace.js"></script>
+</body>
+</html>

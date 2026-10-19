@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.pcap
+pysvrcmd_*.txt
+.DS_Store
+Thumbs.db

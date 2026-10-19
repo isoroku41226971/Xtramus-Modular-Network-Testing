@@ -1,0 +1,418 @@
+:root {
+  color-scheme: light dark;
+
+  /*
+   * Latin text always uses Roboto; Chinese uses two families by context: Noto Sans TC
+   * for key headings (h1/h3) and Huninn (justfont's jf open Huninn, named that on
+   * Google Fonts) for body text. The order matters: browsers fall back per character,
+   * so CJK characters Roboto lacks naturally fall through to the Chinese font with no
+   * separate rules.
+   *
+   * When Google Fonts is unreachable (a corporate network may block the internet), the
+   * local fonts that follow are the fallback: Microsoft JhengHei / PingFang are what
+   * Windows and macOS actually ship; without them the system default could render
+   * Chinese in an old-fashioned serif. Huninn has no built-in system fallback (it is a
+   * web font, not an OS font), so offline, body text falls back to the same Noto Sans TC
+   * / JhengHei stack as the headings.
+   */
+  --font-heading: 'Roboto', 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC',
+                  system-ui, sans-serif;
+  --font-sans: 'Roboto', 'Huninn', 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC',
+               system-ui, sans-serif;
+  /* monospace only for aligned numbers (ports, per-round log, result tables), not the two families above */
+  --font-mono: ui-monospace, 'Roboto Mono', 'Consolas', monospace;
+}
+
+body { margin: 0; font: 14px/1.6 var(--font-sans); background: #FFFFFF; color: #111827; }
+/* key headings (the home page XMNT title, dialog titles) use Noto Sans TC, not Huninn */
+h1, h3 { font-family: var(--font-heading); }
+.topbar { display: flex; justify-content: space-between; align-items: center;
+          padding: 10px 16px; border-bottom: 1px solid rgba(127,127,127,.3); }
+main { padding: 16px; display: flex; flex-direction: column; gap: 18px; }
+/* The home page's <main> drops this padding: .home has its own 60px/20px padding, and main's
+   16px only added a white band between header and footer; without it the .home background
+   and decorations sit flush against them. Scoped by class so the site-wide main rule is
+   untouched (the workspace's <main> lacks this class and keeps its padding). */
+main.home-main { padding: 0; }
+.label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+         color: #15A8DE; font-weight: 600; margin-bottom: 6px; display: flex; gap: 8px;
+         align-items: center; }
+/* The dashed border is grey (rgba(127,127,127,.4)), the same grey .dropzone uses and the color
+   of Packet Studio's dashed DropZone. Brand dark blue (#0E5081) was too loud; a secondary
+   container border needs no brand color. */
+.frame { background: #fff; border: 1px dashed rgba(127,127,127,.4); border-radius: 8px; padding: 10px;
+         display: flex; flex-direction: column; gap: 8px; min-height: 48px; }
+.chip { display: inline-block; background: rgba(127,127,127,.14); border: none;
+        border-radius: 12px; padding: 4px 12px; margin: 0 6px 6px 0;
+        font: inherit; cursor: pointer;
+        transition: transform .2s ease, background-color .2s ease; }
+.chip:hover { background: rgba(21,168,222,.18); transform: scale(1.05); }
+/* Click feedback: a small bounce on press confirming the hit (previously there was no visual
+   feedback at all). @keyframes rather than a transition, because the curve goes "shrink,
+   overshoot past full size, settle back", which a plain transition cannot do. JS adds the
+   class on click and removes it on animationend (see view-catalog.js). */
+@keyframes chip-pop { 0% { transform: scale(1); } 40% { transform: scale(.92); }
+                       70% { transform: scale(1.06); } 100% { transform: scale(1); } }
+.chip.pop { animation: chip-pop .35s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .chip { transition: none; }
+  .chip.pop { animation: none; }
+}
+.qitem { background: rgba(127,127,127,.1); border-radius: 5px; padding: 8px 10px; }
+.qitem .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.qitem.running { outline: 1px solid rgba(90,140,220,.7); }
+/* dashed, same hue but lighter, distinguishing "queued, waiting" from running's solid "in progress" */
+.qitem.queued  { outline: 1px dashed rgba(90,140,220,.5); }
+.qitem.failed  { outline: 1px solid rgba(200,90,70,.7); }
+.qlog { font: 11px/1.5 var(--font-mono); opacity: .72; margin-top: 6px;
+        max-height: 8em; overflow-y: auto; white-space: pre-wrap; }
+.bar { height: 5px; border-radius: 3px; background: rgba(127,127,127,.22);
+       overflow: hidden; margin-top: 6px; }
+.bar > i { display: block; height: 100%; background: rgba(90,140,220,.8); }
+/* Border and background are separate: a visible grey border (#E9EBED) on a white background;
+   too close a border would look like none (#F9FAFB is only 6 steps from white). On hover the
+   border turns the primary color, the background darkens slightly and it scales up, the same
+   language as other interactive elements. .primary / .chip have their own more specific
+   (class) rules and are unaffected. */
+button { font: inherit; cursor: pointer; border-radius: 6px;
+         border: 1px solid #E9EBED; background: #fff; padding: 3px 10px;
+         transition: transform .2s ease, background-color .2s ease, border-color .2s ease; }
+button:hover { border-color: #15A8DE; background: #F9FAFB; transform: scale(1.05); }
+
+@media (prefers-reduced-motion: reduce) {
+  button { transition: none; }
+}
+
+.home { position: relative; overflow: hidden;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 18px; padding: 60px 20px; text-align: center; }
+.home h1 { font-size: 52px; margin: 0; }
+/* A solid color bar under the title as a decorative rule: no animation, just a geometric block
+   adding visual weight, following the "Geometric Purity / Strategic Decoration" design
+   principles. Done in pure CSS with ::after, with no DOM changes. */
+.home h1::after { content: ''; display: block; width: 64px; height: 6px;
+                   background: #15A8DE; border-radius: 3px; margin: 14px auto 0; }
+/* The acronym's full name, so "XMNT" is understood at first sight. It uses the same small,
+   uppercase, letter-spaced style as the existing .label (the design also calls for uppercase +
+   wider tracking on labels/taglines). A negative margin-top keeps it close to the title's
+   decorative rule instead of the uniform 18px gap of .home-content, separating it from the
+   description below. */
+.home .home-fullname { font-size: 13px; font-weight: 600; text-transform: uppercase;
+                        letter-spacing: .12em; color: #15A8DE; margin: -8px 0 0; }
+
+/* Content is wrapped in this layer above the decorations (z-index 1 > 0). .home's flex/padding
+   are unchanged: the decorations are position:absolute and take no part in the flex layout,
+   so .home-content is the only child laid out and the result looks the same as before. */
+.home-content { position: relative; z-index: 1;
+                display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+/* Large low-opacity geometric decorations for the flat design's poster feel;
+   pointer-events:none keeps them from blocking clicks on the cards/buttons beneath */
+.home-deco { position: absolute; z-index: 0; pointer-events: none; }
+.home-deco-circle { width: 320px; height: 320px; border-radius: 50%; background: #15A8DE;
+                     opacity: .14; top: -130px; left: -90px; }
+.home-deco-square { width: 190px; height: 190px; border-radius: 26px; background: #5ADDFC;
+                     opacity: .16; bottom: -55px; right: -45px; transform: rotate(20deg); }
+/* Cursor-following glow, in the same visual language as .home-deco-square (rounded corners,
+   rotation, the same #5ADDFC hue). After hands-on testing it was made larger and fainter so
+   it adds liveliness without drawing attention: 190px -> 260px, and opacity .28 -> .16 (the
+   same level as .home-deco-square itself, so it is no longer more prominent than the
+   background decorations).
+   top/left are fixed at 0 and a negative margin puts (0,0) at the block's center, so
+   ui/cursor-glow.js only writes transform: translate(cursor position in container
+   coordinates) with no centering offset of its own.
+   opacity starts at 0 (hidden) and ui/cursor-glow.js toggles it as the pointer enters and
+   leaves; the transition only handles the fade, while the springy follow of position and
+   rotation comes from JS interpolating and writing transform every frame, not from a CSS
+   transition. */
+.home-cursor-glow { width: 260px; height: 260px; border-radius: 46px;
+                     background: rgba(90, 221, 252, .16);
+                     top: 0; left: 0; margin: -130px 0 0 -130px;
+                     opacity: 0; transition: opacity .3s ease; }
+/* The description used the generic .muted (12px, for secondary text like card descriptions
+   and logs), which is too small for the home page subtitle; this class only changes the
+   size and keeps .muted's faded color. It is .home .home-subtitle (two levels) rather than
+   plain .home-subtitle because .muted is declared later, and with equal specificity the
+   later rule wins, so higher specificity is the safe choice */
+.home .home-subtitle { font-size: 17px; }
+
+.row-wrap { flex-direction: row; flex-wrap: wrap; }
+.card { background: rgba(127,127,127,.1); border-radius: 5px; padding: 8px 10px;
+        min-width: 220px; flex: 1 1 220px; }
+.card.blocked { outline: 1px solid rgba(200,90,70,.7); }
+.card.warned  { outline: 1px solid rgba(200,170,60,.7); }
+.card.incomplete { opacity: .7; }
+.muted { opacity: .6; font-size: 12px; }
+.field { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.field > span { min-width: 180px; opacity: .75; font-size: 12px; }
+.field input[type=text], .field input:not([type]), .field select { flex: 1; font: inherit;
+        padding: 3px 6px; border-radius: 4px; border: 1px solid rgba(127,127,127,.4);
+        background: transparent; color: inherit; }
+.validate { font-size: 12px; margin: 6px 0; }
+.validate.blocked { color: #c8756a; }
+.validate.warned { color: #c8a23c; }
+.validate.incomplete { opacity: .6; }
+.validate.ok { display: none; }
+.detail { margin-top: 8px; }
+.detail table { border-collapse: collapse; font-size: 11px; margin: 4px 0 10px; }
+.detail th, .detail td { border: 1px solid rgba(127,127,127,.35); padding: 2px 8px; }
+.detail th { background: rgba(127,127,127,.12); }
+
+/* Mesh XY grid (ports as row/column headers), designed like the exported PDF/Excel reports:
+   values are centered, with a divider lighter than the borders between the tx and rx lines
+   to show that the two numbers in a cell are the two directions of one pair. */
+.detail table.mesh-grid td { text-align: center; }
+.detail table.mesh-grid .mesh-grid-rx {
+  border-top: 1px solid rgba(127,127,127,.2);
+  margin-top: 2px; padding-top: 2px;
+}
+
+/* Colored PASS/FAIL text for the passed row; the colors match the PDF/Excel exports
+   (GREEN/RED in ui/export-pdf.js, passGreen/failRed in engine/xlsx-writer.js). */
+.detail .pass { color: #178C33; font-weight: bold; }
+.detail .fail { color: #BF1A1A; font-weight: bold; }
+
+/* --- tab bar and layout (positioned as in Packet Studio) --- */
+.tabs { display: flex; gap: 4px; }
+.tab { border: none; border-radius: 4px; padding: 7px 16px; opacity: .6; }
+.tab:hover { opacity: 1; }
+.tab.on { background: rgba(127,127,127,.14); font-weight: 500; opacity: 1; }
+.panel { display: flex; flex-direction: column; gap: 18px; }
+.actions { display: flex; gap: 8px; align-items: center; }
+.primary { background: #15A8DE; color: #fff; border: none; border-radius: 8px;
+           padding: 7px 16px; font-weight: 600;
+           transition: transform .2s ease, background-color .2s ease; }
+.primary:hover { background: #0E5081; transform: scale(1.05); }
+/* These three workspace buttons (add test item / add all / run all) drop .primary's
+   font-weight:600. Only these three ids are targeted, leaving .primary itself alone (primary
+   buttons elsewhere, such as save/confirm, stay bold). */
+#new-item, #add-all, #run-all { font-weight: normal; }
+
+@media (prefers-reduced-motion: reduce) {
+  .primary { transition: none; }
+}
+
+/* Buttons in the editor dialog (dialog#editor: save/cancel, ...) keep the hover color shift but
+   not the scale-up: it is a dense form, and every control growing as the pointer passes over
+   would be distracting, so the color change is feedback enough. An id selector raises
+   specificity to override the scale from .primary:hover / button:hover without affecting
+   those classes outside the editor. */
+dialog#editor .primary:hover,
+dialog#editor button:hover {
+  transform: none;
+}
+.divider { display: flex; justify-content: center; padding: 6px 0; }
+.self-end { align-self: flex-end; }
+
+/* --- header and footer shared by both pages (fixed brand colors, independent of light/dark theme) ---
+   The header background uses the primary color chosen for the flat redesign, shared by both
+   pages to keep the brand color consistent site-wide. */
+.site-header { background: #15A8DE; color: #fff; padding: 10px 16px; }
+.brand { background: none; border: none; color: inherit; font: inherit;
+         font-size: 17px; font-weight: 600; padding: 4px 8px; margin: -4px -8px;
+         border-radius: 6px; cursor: pointer;
+         transition: transform .2s ease, background-color .2s ease; }
+.brand:hover { transform: scale(1.05); background: rgba(255,255,255,.14); }
+/* The "X" used to have its own red (#e8451f), removed to match the real company logo, which is
+   all blue/dark blue with no accent color. "Xtramus XMNT" now uses the white inherited from
+   .brand (which also contrasts better with the header background than dark blue text). */
+
+@media (prefers-reduced-motion: reduce) {
+  .brand { transition: none; }
+}
+.site-footer { border-top: 1px solid rgba(127,127,127,.25); margin-top: 24px;
+               padding: 12px; text-align: center; font-size: 12px; opacity: .5; }
+
+/* --- workspace toolbar ---
+   The dashed border is grey (rgba(127,127,127,.4)), the same grey as .frame/.dropzone, for the
+   same reason as .frame: brand dark blue is reserved for what really needs emphasis. */
+.toolbar { display: flex; align-items: center; gap: 16px; padding: 8px 16px;
+           background: #fff; border-bottom: 1px dashed rgba(127,127,127,.4); }
+.toolbar .grow { flex: 1; }
+.leased { font: 12px/1.6 var(--font-mono); opacity: .75; }
+
+/* --- home page cards ---
+   Flat design: define boundaries with background color, not borders, so the border is gone and
+   the two cards are distinguished by light blue blocks (see .home-card-primary /
+   .home-card-deep). Hover uses scale + a darker background, never shadows (the design rules
+   out shadows). */
+.home-cards { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.home-card { display: flex; flex-direction: column; align-items: center; gap: 8px;
+             width: 210px; padding: 22px 16px; border-radius: 8px; border: none;
+             font: inherit; color: inherit; cursor: pointer; text-align: center;
+             transition: transform .2s ease, background-color .2s ease; }
+.home-card:hover:not(:disabled) { transform: scale(1.03); }
+.home-card:disabled { opacity: .4; cursor: not-allowed; }
+.home-card-icon { width: 56px; height: 56px; border-radius: 50%; display: flex;
+                  align-items: center; justify-content: center; background: #fff;
+                  transition: transform .2s ease; }
+.home-card:hover:not(:disabled) .home-card-icon { transform: scale(1.1); }
+.home-card-icon svg { width: 26px; height: 26px; }
+/* 500 (font-medium), not 600: Huninn has only one real weight (400), so 500/600 rely on the
+   browser's synthetic bold, and the bigger the gap, the heavier the faux bolding and the more
+   it looks like a generic sans, losing Huninn's character. This matches Packet Studio (h2 uses
+   font-medium/500) so both apply the same amount of bolding. */
+.home-card .title { font-weight: 500; }
+
+.home-card-primary { background: #E8F7FD; }
+.home-card-primary:hover:not(:disabled) { background: #CCEEFA; }
+.home-card-primary .home-card-icon { color: #15A8DE; }
+
+.home-card-deep { background: #E8F4FD; }
+.home-card-deep:hover:not(:disabled) { background: #CCE6FA; }
+.home-card-deep .home-card-icon { color: #0E5081; }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-card, .home-card-icon { transition: none; }
+}
+
+/* --- port picker dialog --- */
+dialog { border: 1px solid rgba(127,127,127,.4); border-radius: 8px;
+         padding: 18px 20px; min-width: 320px; color: inherit; background: Canvas; }
+dialog::backdrop { background: rgba(0,0,0,.45); }
+.port-group { margin: 10px 0; }
+.port-group > b { font-size: 12px; opacity: .7; }
+.port-line { display: block; padding: 2px 0 2px 10px; }
+.port-line.off { opacity: .45; }
+.dialog-note { color: #c8a23c; font-size: 12px; margin-bottom: 8px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+/* --- picker / editor dialogs --- */
+dialog.wide { min-width: min(760px, 92vw); max-height: 84vh; overflow-y: auto; }
+dialog h3 { margin: 0 0 4px; }
+.picker { display: flex; flex-wrap: wrap; gap: 0; max-width: 640px; }
+.chip.custom { display: block; margin-top: 10px; border: 1px dashed rgba(127,127,127,.75);
+               background: transparent; }
+.chip.custom:hover { background: rgba(127,127,127,.14); }
+
+/* --- grey parameter hints --- */
+.field-with-note { margin-bottom: 6px; }
+.field-with-note > .field { margin-bottom: 2px; }
+.note { font-size: 11px; opacity: .55; margin: 0 0 6px 188px; line-height: 1.45; }
+
+/* --- queue drag-to-reorder --- */
+.qitem[draggable=true] { cursor: grab; }
+.qitem.dragging { opacity: .4; }
+.qitem.drop-target { outline: 2px dashed rgba(90,140,220,.8); }
+.grip { opacity: .35; margin-right: 6px; cursor: grab; letter-spacing: -2px; }
+
+/* --- editor sections --- */
+.edit-section { border-top: 1px solid rgba(127,127,127,.22); padding-top: 10px; margin-top: 14px; }
+.edit-section:first-of-type { border-top: none; margin-top: 6px; }
+.edit-section > h4 { margin: 0 0 10px; font-size: 12px; letter-spacing: .06em;
+                    text-transform: uppercase; opacity: .55; }
+
+/* the font is already set to --font-heading by the h1,h3 rule; this only adds weight and letter spacing */
+.home h1 { font-weight: 700; letter-spacing: .04em; }
+
+/* numbers in result tables must align, so they use monospace like .qlog / .leased */
+.detail table { font-family: var(--font-mono); }
+
+/* --- drop zones (.xmnt on the home page, capture files in the editor) --- */
+.dropzone { border: 1px dashed rgba(127,127,127,.4); border-radius: 8px;
+            padding: 14px; text-align: center; font-size: 12px; opacity: .6;
+            width: min(420px, 90vw); }
+.dropzone.over { opacity: 1; border-color: #15A8DE; background: rgba(21,168,222,.08); }
+
+/* the editor version follows the field width, unlike the centered fixed-width home page one */
+.pcap-dropzone { width: auto; margin-top: 6px; padding: 10px; }
+
+/* only custom-packet cards accept capture files; the whole card gives feedback on drag-over */
+.card.accepts-capture.drop-over {
+  outline: 2px dashed #15A8DE; background: rgba(21,168,222,.08);
+}
+
+/* --- workspace save bar --- */
+.save-bar { display: flex; align-items: center; gap: 10px; }
+.unsaved-dot { color: #c8a23c; font-size: 12px; }
+
+/* --- custom dropdown (replaces native select) --- */
+.listbox { position: relative; flex: 1; }
+.listbox-trigger { width: 100%; display: flex; align-items: center;
+                   justify-content: space-between; gap: 8px; text-align: left;
+                   font: inherit; padding: 3px 6px; border-radius: 4px;
+                   border: 1px solid rgba(127,127,127,.4);
+                   background: transparent; color: inherit; cursor: pointer; }
+.listbox-chevron { opacity: .6; transition: transform .15s ease; flex-shrink: 0; }
+.listbox.open .listbox-chevron { transform: rotate(180deg); }
+
+/* position:fixed with coordinates computed in JS, so the dialog's overflow-y:auto cannot clip it */
+.listbox-panel { position: fixed; z-index: 20; margin: 0; padding: 4px;
+                 list-style: none; border-radius: 6px; max-height: min(280px, 40vh);
+                 overflow-y: auto; background: Canvas; color: CanvasText;
+                 border: 1px solid rgba(127,127,127,.4);
+                 box-shadow: 0 8px 24px rgba(0,0,0,.25);
+                 opacity: 0; transform: translateY(-4px) scaleY(.96); transform-origin: top;
+                 transition: opacity .12s ease, transform .12s ease; }
+/* The open state is marked on the panel itself, not via a .listbox.open descendant selector:
+   while open the panel is moved outside wrap (into the dialog or body), so it is not a DOM
+   descendant of wrap and .listbox.open .listbox-panel would never match. */
+.listbox-panel.open { opacity: 1; transform: translateY(0) scaleY(1); }
+.listbox-option { padding: 5px 8px; border-radius: 4px; cursor: pointer; }
+/* current selection: background color rather than bold, the same "currently selected" language as .tab.on */
+.listbox-option[aria-selected=true] { background: rgba(127,127,127,.14); }
+/* the item under keyboard focus uses a different color (blue), distinguishable even combined with the rule above */
+.listbox-option.active { background: rgba(21,168,222,.16); }
+.listbox-trigger:disabled { opacity: .4; cursor: not-allowed; }
+
+/* when the user has turned off animations in system settings, open/close switches instantly with no transition */
+@media (prefers-reduced-motion: reduce) {
+  .listbox-chevron, .listbox-panel { transition: none; }
+}
+
+/* --- toggle switch (replaces <input type=checkbox>) --- */
+.switch-field { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+/* read-only indicator (the workspace's simulation mode): it only shows state and can't be clicked, so no pointer cursor */
+.switch-field-static { cursor: default; }
+.switch { position: relative; display: inline-flex; align-items: center; flex-shrink: 0;
+          width: 34px; height: 18px; padding: 2px; border-radius: 999px; border: none;
+          background: rgba(127,127,127,.35); cursor: pointer;
+          transition: background-color .15s ease; }
+.switch[aria-checked=true] { background: #15A8DE; }
+/* .switch is a <button>, so on hover it would pick up the site-wide button:hover
+   background:#F9FAFB (near white) and wash out the grey pill. This overrides it: hover darkens
+   the grey when off and the blue when on (the same #0E5081 as .primary:hover) instead of
+   turning white. */
+.switch:hover { background: rgba(127,127,127,.55); }
+.switch[aria-checked=true]:hover { background: #0E5081; }
+.switch:disabled { opacity: .4; cursor: not-allowed; }
+.switch-field-static .switch:disabled { cursor: default; }
+.switch:focus-visible { outline: 2px solid #15A8DE; outline-offset: 2px; }
+.switch-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff;
+                box-shadow: 0 1px 2px rgba(0,0,0,.35); transition: transform .15s ease; }
+.switch[aria-checked=true] .switch-thumb { transform: translateX(16px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .switch, .switch-thumb { transition: none; }
+}
+
+/* --- port status dots: blue = available, red = taken ---
+   Available uses the primary blue; .status-dot-occupied reuses the red of .validate.blocked
+   (a functional status color, unrelated to the brand blue and outside the palette). */
+.port-status { display: inline-flex; align-items: center; gap: 5px; }
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+              flex-shrink: 0; }
+.status-dot-available { background: #15A8DE; box-shadow: 0 0 0 3px rgba(21,168,222,.18); }
+.status-dot-occupied  { background: #c8756a; box-shadow: 0 0 0 3px rgba(200,117,106,.18); }
+
+/* --- home -> workspace loading transition --- */
+.loading-transition { position: fixed; inset: 0; z-index: 50;
+                       background: rgba(0,0,0,.45);
+                       display: flex; align-items: center; justify-content: center; }
+.loading-transition-box { background: #fff; border: 2px solid #15A8DE; border-radius: 10px;
+                           padding: 28px 40px; display: flex; flex-direction: column;
+                           align-items: center; gap: 10px;
+                           box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.loading-transition-brand { color: #15A8DE; font-size: 18px; font-weight: 600;
+                             animation: loading-transition-breathe 1.6s ease-in-out infinite; }
+.loading-transition-msg { color: #111827; opacity: .6; font-size: 12px; }
+
+@keyframes loading-transition-breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .6; transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-transition-brand { animation: none; }
+}

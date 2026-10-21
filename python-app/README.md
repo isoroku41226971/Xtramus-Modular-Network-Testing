@@ -37,7 +37,7 @@ Modifications to the vendor SDK copy:
 ## Architecture
 
 ```mermaid
-%%{init: {"flowchart": {"htmlLabels": false}}}%%
+%%{init: {"flowchart": {"htmlLabels": false, "wrappingWidth": 400}}}%%
 flowchart TD
     Start(["Start"]) --> Pick["Choose<br/>connection-layer modules"]
     Pick --> Shape["Choose an<br/>algorithm-layer shape"]
@@ -120,7 +120,7 @@ Unsupported combinations: `VaryingAddressAgedLearningSpec` works only with `OneT
 The assembler (`nupython_xmnt_recipe_assembly.py`) runs one round as a straight line, with no loop (looping belongs to the algorithm layer):
 
 ```mermaid
-%%{init: {"flowchart": {"htmlLabels": false}}}%%
+%%{init: {"flowchart": {"htmlLabels": false, "wrappingWidth": 400}}}%%
 flowchart TD
     Start(["assemble_and_run()"]) --> Topo["Resolve Topology"]
     Topo --> Stream["Build streams from<br/>target_now + StreamSpec"]
@@ -145,7 +145,7 @@ flowchart TD
 | `MeasurementSpec(test_fn)` | One measurement, no verdict | `run_measurement()` |
 
 ```mermaid
-%%{init: {"flowchart": {"htmlLabels": false}}}%%
+%%{init: {"flowchart": {"htmlLabels": false, "wrappingWidth": 400}}}%%
 flowchart TD
     Start(["ConvergenceSpec"]) --> C1["test_fn at target_now"]
     C1 --> C2["check_fn verdict"]

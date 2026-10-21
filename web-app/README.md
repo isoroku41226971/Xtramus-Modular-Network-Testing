@@ -12,7 +12,7 @@ A browser version of XMNT (Xtramus Modular Network Testing). It ports the [Pytho
 - **Port leasing**: ports are picked once per project and leased for the whole session, so several browser tabs cannot grab the same ports.
 - **Project files** (`.xmnt`) saved and reopened via the File System Access API, with a download fallback in browsers that lack it.
 - **Reports** exported as PDF and Excel, generated entirely in the browser by hand-written PDF / OOXML / ZIP writers.
-- **Custom packet replay**: import a `.pcap` / `.pcapng` capture and replay its frames byte for byte.
+- **Custom packet replay**: import a `.pcap` / `.pcapng` capture and replay its frames byte for byte. Captures can be built in the companion [Packet Studio](https://github.com/isoroku41226971/Xtramus-packet-studio).
 
 ## Same logic as the Python app
 

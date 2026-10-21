@@ -66,5 +66,6 @@ Each folder has its own README with architecture details and instructions for ru
 
 - The NuPython SDK files in `python-app/` are © Xtramus and are included with the company's permission. Running tests against hardware requires an Xtramus chassis; the web app can be explored without one in simulation mode.
 - Code, comments and documentation are in English. The web UI and the Python scripts' console and error messages are in Traditional Chinese, the language of the tools' users.
+- Companion project: [Packet Studio](https://github.com/isoroku41226971/Xtramus-packet-studio), a browser-based packet builder by the same author. The capture files it exports can be replayed by the web app's custom packet replay.
 - No open-source license is granted; all rights are reserved.
 - Developed during an internship at Xtramus (July–August 2026).

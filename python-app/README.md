@@ -37,16 +37,17 @@ Modifications to the vendor SDK copy:
 ## Architecture
 
 ```mermaid
+%%{init: {"flowchart": {"htmlLabels": false}}}%%
 flowchart TD
-    Start(["Start"]) --> Pick["Choose connection-layer modules"]
-    Pick --> Shape["Choose an algorithm-layer shape"]
+    Start(["Start"]) --> Pick["Choose<br/>connection-layer modules"]
+    Pick --> Shape["Choose an<br/>algorithm-layer shape"]
 
     subgraph ALG["Algorithm layer"]
-        Shape -->|"run_test_item()"| Judge["Dispatch by shape<br/>(convergence loop / single verdict / measurement)"]
+        Shape -->|"run_test_item()"| Judge["Dispatch by shape<br/>(convergence loop /<br/>single verdict / measurement)"]
     end
 
     subgraph CONN["Connection layer"]
-        Judge -->|"test_fn() → assemble_and_run()"| Assemble["Resolve topology → build streams → learn → send → read"]
+        Judge -->|"test_fn() →<br/>assemble_and_run()"| Assemble["Resolve topology →<br/>build streams → learn →<br/>send → read"]
         Assemble --> ReturnResult["Return a result dict"]
     end
 
@@ -119,14 +120,15 @@ Unsupported combinations: `VaryingAddressAgedLearningSpec` works only with `OneT
 The assembler (`nupython_xmnt_recipe_assembly.py`) runs one round as a straight line, with no loop (looping belongs to the algorithm layer):
 
 ```mermaid
+%%{init: {"flowchart": {"htmlLabels": false}}}%%
 flowchart TD
     Start(["assemble_and_run()"]) --> Topo["Resolve Topology"]
-    Topo --> Stream["Build streams from target_now + StreamSpec"]
-    Stream --> Learn["Send learning frames per LearningSpec"]
+    Topo --> Stream["Build streams from<br/>target_now + StreamSpec"]
+    Stream --> Learn["Send learning frames<br/>per LearningSpec"]
     Learn --> Clear["Clear counters"]
-    Clear --> Configure["Configure streams on the chassis"]
+    Clear --> Configure["Configure streams<br/>on the chassis"]
     Configure --> Trigger["Trigger per TriggerKind"]
-    Trigger --> Read["Read results per ReaderKind"]
+    Trigger --> Read["Read results<br/>per ReaderKind"]
     Read --> Result(["Return a result dict"])
 ```
 
@@ -143,6 +145,7 @@ flowchart TD
 | `MeasurementSpec(test_fn)` | One measurement, no verdict | `run_measurement()` |
 
 ```mermaid
+%%{init: {"flowchart": {"htmlLabels": false}}}%%
 flowchart TD
     Start(["ConvergenceSpec"]) --> C1["test_fn at target_now"]
     C1 --> C2["check_fn verdict"]

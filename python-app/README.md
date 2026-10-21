@@ -189,7 +189,7 @@ With `cfg.simulate=True`, `run_test_item(cfg, spec, fake_result_fn=...)` validat
 
 ## Test coverage
 
-All of the following have been run and verified on a real chassis.
+All of the following have been run and verified on a real chassis. Beyond the automated tests, every script was tested by hand on a chassis with a real switch as the DUT, and the results were cross-checked against theoretical line-rate figures, packet captures and repeated runs.
 
 | Test | Topology | Learning | Stream | Trigger | Reader | Shape |
 |---|---|---|---|---|---|---|

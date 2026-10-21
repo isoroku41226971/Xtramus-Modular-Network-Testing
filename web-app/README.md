@@ -60,6 +60,7 @@ Key design decisions:
 
 - The algorithm layer's tests were translated from the Python test suite.
 - The connection layer was checked against complete command sequences recorded from the Python engine for each hardware test recipe: replaying a recipe in JavaScript must reproduce the recorded sequence call for call, and any divergence fails at the exact command where it happens. `engine/emitter/recording.js`, `replay.js` and `golden-transport.js` are that verification harness, and "golden recordings" in code comments refers to these Python recordings. (The recordings and the test suite are not part of this repository.)
+- The UI was tested by hand in the browser across the whole workflow: building tests from presets and from scratch, the editor's blocked module combinations, queuing and reordering, running in simulation mode, saving and reopening projects, and exporting PDF / Excel reports.
 
 ## Running locally
 
